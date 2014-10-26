@@ -1,0 +1,9 @@
+{
+	"name": "controller_dispatcher",
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2014, t",
+	"authors": ["t"],
+	"dependencies": {
+    "murmurhash3": { "version": "~>0.0"}
+	}
+}
