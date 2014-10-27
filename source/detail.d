@@ -3,6 +3,8 @@ import std.typetuple;
 import std.string;
 
 
+@safe:
+
 struct IdGenerator(T) {
   T id;
   T next() { return ++id; }
@@ -10,6 +12,7 @@ struct IdGenerator(T) {
 }
 
 template ArrayBaseType(A : E[],E) { alias E ArrayBaseType; }
+template NullableBaseType(A : Nullable!E,E) { alias E NullableBaseType; }
 
 
 /// A state in the output state graph

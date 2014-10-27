@@ -1,21 +1,25 @@
+import std.algorithm;
+import std.typecons;
+import std.stdio;
+import std.range;
 import detail;
 import std.array;
 import std.string;
 
-/// The output from make
-struct MatcherAutomata(uint max_level, MatcherList) {
-  State[] states;
-  TransitionList!(max_level-1, MatcherList) transitions;
+import naive_automaton;
 
-  /// 
-  uint[] match(MatchedT)( MatchedT data )
-  {
-    uint[] matched = [];
-    for(uint level = 0; level < max_level; ++level ) {
-      if (level == max_level) { return matched; }
-      level++;
-    }
-    return matched;
+@safe:
+
+/// The output from make
+struct MatcherAutomata(uint maxLevel, MatcherList) {
+  State[] states;
+  TransitionList!(maxLevel-1, MatcherList) transitions;
+
+  alias DescriptionT = MatcherList;
+  alias MsgT(uint level) = NullableBaseType!(typeof(transitions[level][0].msg));
+
+  auto getMatcher(alias AutomatonType=NaiveAutomaton)() {
+    return AutomatonType!(maxLevel, MatcherAutomata!(maxLevel, MatcherList))( this );
   }
 
 }
@@ -42,4 +46,15 @@ string toDot(Automata)( ref Automata a )
   app.put("}");
   return app.data;
 }
+
+
+// ---------------------------------------------------
+
+
+
+
+
+
+
+
 

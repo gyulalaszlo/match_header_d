@@ -10,6 +10,8 @@ import std.string;
 import detail;
 import matcher_automata;
 
+@safe:
+
 /// Packs the state for the making the states and transitions
 struct MakeLevelState(uint max_level, MatcherList) {
   uint matcherCount;
@@ -30,7 +32,7 @@ struct MakeLevelState(uint max_level, MatcherList) {
     //auto maker = MakeLevelState!(max_level, MatcherList)( matcher_count, matchers );
     //debug writefln("result=%s", maker.call!0( states ));
     auto statesOut = call!0(states);
-    return MatcherAutomata!(max_level, MatcherList)( statesOut, transitions );
+    return MatcherAutomata!(max_level, MatcherList)( states ~ statesOut, transitions );
   }
 
 
@@ -39,11 +41,16 @@ struct MakeLevelState(uint max_level, MatcherList) {
     State[] statesThisLevel;
     // create the states and transitions for this level
     statesThisLevel = statesThisLevel.reduce!((m, s) => createStatesReachableFrom!(level)(m,s))( statesBellowCurrent );
+    // make sure the destinations are sorted in the state so the results of matching
+    // are deterministic and can be tested
+    foreach(s; statesThisLevel) { s.dests.sort(); }
+
+    // Merge & clean up the tree
     cleanStateLevel!(level)( statesThisLevel, transitions[level] );
 
-    // do cleanup here
+    // recurse if necessary
     static if (level < max_level - 1 ) {
-      return join( [statesBellowCurrent, statesThisLevel, call!(level+1)( statesThisLevel )]);
+      return join( [statesThisLevel, call!(level+1)( statesThisLevel )]);
     } else {
       return statesThisLevel;
     }
@@ -142,9 +149,14 @@ struct MakeLevelState(uint max_level, MatcherList) {
       auto transitionsToRewire = transitions.filter!(t => dupeIds.any!( did=> (t.to == did)));
       foreach(ref t; transitionsToRewire) { t.to = originalId; }
 
-      auto cleanedStates = states.remove!(s => dupeIds.any!(did => did == s.id ));
-      states.length = cleanedStates.length;
+      removeFromStates( states, dupeIds);
     }
+  }
 
+  /// Using std.algorithms.remove is unsafe so this is refactored here
+  @trusted void removeFromStates(States, IdList)( ref States states, in IdList ids )
+  {
+    auto cleanedStates = states.remove!(s => ids.any!(did => did == s.id ));
+    states.length = cleanedStates.length;
   }
 }
